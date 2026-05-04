@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCI Photo Filter Studio</title>
+    <style>
+        :root {
+            --primary: #6200ea;
+            --background: #121212;
+            --surface: #1e1e1e;
+            --text: #ffffff;
+            --text-secondary: #b3b3b3;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        .image-section {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .image-container {
+            flex: 1;
+            background-color: var(--surface);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        #preview-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: filter 0.1s ease;
+        }
+
+        .controls-section {
+            flex: 1;
+            min-width: 350px;
+            background-color: var(--surface);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .reset-btn {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .reset-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .control-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .control-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .control-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -5px;
+            box-shadow: 0 0 10px rgba(98, 0, 234, 0.5);
+            transition: transform 0.1s;
+        }
+
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .presets {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+
+        .preset-btn {
+            background: rgba(255,255,255,0.05);
+            border: none;
+            color: white;
+            padding: 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .preset-btn:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .preset-btn.active {
+            background: var(--primary);
+        }
+
+        .upload-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            width: 100%;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: auto;
+            transition: background 0.2s;
+        }
+
+        .upload-btn:hover {
+            background: #7c4dff;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* Mobile Responsive Layout Fixes */
+        @media (max-width: 768px) {
+            body {
+                overflow-y: auto;
+                height: auto;
+            }
+            .container {
+                flex-direction: column;
+                height: auto;
+            }
+            .image-section {
+                flex: none;
+                height: 45vh;
+                padding: 1rem;
+            }
+            .controls-section {
+                flex: none;
+                min-width: 100%;
+                padding: 1.5rem;
+                box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+            }
+            .header {
+                margin-bottom: 1rem;
+            }
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="image-section">
+            <div class="header">
+                <h1>HCI Photo Studio</h1>
+                <p>Multimedia Image Filter Application</p>
+            </div>
+            <div class="image-container">
+                <!-- Local kitty image -->
+                <img id="preview-image" src="../hci_multimedia_filters_web/Screenshot_26-Jan_10-10-08_kitty.png" alt="Preview">
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <div class="controls-header">
+                <h2>Adjustments</h2>
+                <button class="reset-btn" id="reset-btn">Reset</button>
+            </div>
+
+            <div class="sliders-container">
+                <div class="control-group">
+                    <div class="control-header">
+                        <span class="control-label">Brightness</span>
+                        <span class="control-value" id="brightness-val">100%</span>
+                    </div>
+                    <input type="range" id="brightness" min="0" max="200" value="100">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span class="control-label">Contrast</span>
+                        <span class="control-value" id="contrast-val">100%</span>
+                    </div>
+                    <input type="range" id="contrast" min="0" max="200" value="100">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span class="control-label">Saturation</span>
+                        <span class="control-value" id="saturation-val">100%</span>
+                    </div>
+                    <input type="range" id="saturation" min="0" max="200" value="100">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span class="control-label">Sepia</span>
+                        <span class="control-value" id="sepia-val">0%</span>
+                    </div>
+                    <input type="range" id="sepia" min="0" max="100" value="0">
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-header">
+                        <span class="control-label">Blur</span>
+                        <span class="control-value" id="blur-val">0px</span>
+                    </div>
+                    <input type="range" id="blur" min="0" max="20" value="0">
+                </div>
+            </div>
+
+            <div class="controls-header" style="margin-top: 1rem; border-bottom: none;">
+                <h2>Presets</h2>
+            </div>
+            <div class="presets">
+                <button class="preset-btn active" data-preset="normal">Normal</button>
+                <button class="preset-btn" data-preset="vintage">Vintage</button>
+                <button class="preset-btn" data-preset="bw">B & W</button>
+                <button class="preset-btn" data-preset="cinematic">Cinematic</button>
+            </div>
+
+            <input type="file" id="file-input" accept="image/*">
+            <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+                Upload Custom Image
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const image = document.getElementById('preview-image');
+            const fileInput = document.getElementById('file-input');
+            const resetBtn = document.getElementById('reset-btn');
+            
+            const inputs = {
+                brightness: document.getElementById('brightness'),
+                contrast: document.getElementById('contrast'),
+                saturation: document.getElementById('saturation'),
+                sepia: document.getElementById('sepia'),
+                blur: document.getElementById('blur')
+            };
+
+            const values = {
+                brightness: document.getElementById('brightness-val'),
+                contrast: document.getElementById('contrast-val'),
+                saturation: document.getElementById('saturation-val'),
+                sepia: document.getElementById('sepia-val'),
+                blur: document.getElementById('blur-val')
+            };
+
+            const presetBtns = document.querySelectorAll('.preset-btn');
+
+            const presetsConfig = {
+                normal: { brightness: 100, contrast: 100, saturation: 100, sepia: 0, blur: 0 },
+                vintage: { brightness: 110, contrast: 90, saturation: 70, sepia: 60, blur: 0 },
+                bw: { brightness: 100, contrast: 120, saturation: 0, sepia: 0, blur: 0 },
+                cinematic: { brightness: 90, contrast: 130, saturation: 110, sepia: 10, blur: 0 }
+            };
+
+            function applyFilters() {
+                const b = inputs.brightness.value;
+                const c = inputs.contrast.value;
+                const s = inputs.saturation.value;
+                const sp = inputs.sepia.value;
+                const bl = inputs.blur.value;
+
+                image.style.filter = \`brightness(\${b}%) contrast(\${c}%) saturate(\${s}%) sepia(\${sp}%) blur(\${bl}px)\`;
+
+                values.brightness.textContent = \`\${b}%\`;
+                values.contrast.textContent = \`\${c}%\`;
+                values.saturation.textContent = \`\${s}%\`;
+                values.sepia.textContent = \`\${sp}%\`;
+                values.blur.textContent = \`\${bl}px\`;
+            }
+
+            Object.values(inputs).forEach(input => {
+                input.addEventListener('input', () => {
+                    removeActivePreset();
+                    applyFilters();
+                });
+            });
+
+            presetBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    removeActivePreset();
+                    e.target.classList.add('active');
+                    
+                    const presetName = e.target.getAttribute('data-preset');
+                    const config = presetsConfig[presetName];
+                    
+                    inputs.brightness.value = config.brightness;
+                    inputs.contrast.value = config.contrast;
+                    inputs.saturation.value = config.saturation;
+                    inputs.sepia.value = config.sepia;
+                    inputs.blur.value = config.blur;
+                    
+                    applyFilters();
+                });
+            });
+
+            function removeActivePreset() {
+                presetBtns.forEach(btn => btn.classList.remove('active'));
+            }
+
+            resetBtn.addEventListener('click', () => {
+                removeActivePreset();
+                document.querySelector('[data-preset="normal"]').classList.add('active');
+                
+                inputs.brightness.value = 100;
+                inputs.contrast.value = 100;
+                inputs.saturation.value = 100;
+                inputs.sepia.value = 0;
+                inputs.blur.value = 0;
+                
+                applyFilters();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        image.src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
